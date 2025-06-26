@@ -4,17 +4,17 @@ local StarterGui = game:GetService("StarterGui")
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
--- Hide CoreGui to prevent exiting
+-- Disable CoreGui
 StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.All, false)
 
--- Remove workspace clutter
+-- Safer workspace cleanup (avoid deleting terrain/colliders/walls)
 for _, v in ipairs(workspace:GetChildren()) do
-	if not (v:IsA("Camera") or v:IsA("Terrain") or Players:GetPlayerFromCharacter(v)) then
+	if v:IsA("Tool") or v.Name:match("UnneededUI") then
 		v:Destroy()
 	end
 end
 
--- Create GUI
+-- GUI Setup
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "LegitLoadingScreen"
 screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
@@ -74,9 +74,36 @@ for i = 1, goal do
 	wait(0.005)
 end
 
--- Wait 10 minutes (400 seconds) before closing GUI
-wait(600)
+-- Prevent noclip-like behavior
+local function enforceCharacterPhysics(character)
+	local humanoid = character:WaitForChild("Humanoid", 5)
+	if humanoid then
+		humanoid.StateChanged:Connect(function(_, new)
+			if new == Enum.HumanoidStateType.Physics or new == Enum.HumanoidStateType.PlatformStanding then
+				humanoid:ChangeState(Enum.HumanoidStateType.Running)
+			end
+		end)
+	end
 
--- Restore CoreGui and remove loading screen
+	-- Force all parts to be collidable
+	for _, part in ipairs(character:GetDescendants()) do
+		if part:IsA("BasePart") then
+			part.CanCollide = true
+		end
+	end
+end
+
+-- Apply to current and future characters
+if LocalPlayer.Character then
+	enforceCharacterPhysics(LocalPlayer.Character)
+end
+
+LocalPlayer.CharacterAdded:Connect(function(char)
+	enforceCharacterPhysics(char)
+end)
+
+-- Wait 10 minutes (600 seconds) then remove GUI and restore CoreGui
+task.wait(600)
+
 StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.All, true)
 screenGui:Destroy()
